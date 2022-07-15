@@ -1,0 +1,7 @@
+---
+  ListeningCOMPort: COM1 
+  OutgoingCOMPORT: COM12
+  PushoverAPPKey: asdfghbkjdfhgsdaflkj
+  PushoverRegularUserGroupKey: asdgnasjlkdghnbj
+  PushoverAdminUserGroupKey: adsgfsadgasdfgasdfg
+  AlertThreshold: 3
