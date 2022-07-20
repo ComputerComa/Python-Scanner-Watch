@@ -216,3 +216,5 @@ def main_list():
         main_list()
 
 main_list()
+
+##test_notify()
