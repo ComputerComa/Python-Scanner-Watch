@@ -1,7 +1,10 @@
 ---
-  ListeningCOMPort: COM1 
-  OutgoingCOMPORT: COM12
-  PushoverAPPKey: asdfghbkjdfhgsdaflkj
-  PushoverRegularUserGroupKey: asdgnasjlkdghnbj
-  PushoverAdminUserGroupKey: adsgfsadgasdfgasdfg
+  ListeningCOMPort: COM1 #Used to monitor the incoming scanner DATA
+  RelayEnabled: True #if there is a reset relay
+  RelayCOMPORT: COM12 #The outgoing COM port for the Reset relay
+  PushoverAPIKey: abcdefghijlkmnopqrstuvwxyzabcd #The app key created for notifications
+  #Needs two separate user groups setup, the admin group for administrative notifications, and a user group for regular notifications. (The user group can be setup to be publically subnscribable)
+  PushoverRegularUserGroupKey: abcdefghijlkmnopqrstuvwxyzabcd 
+  PushoverAdminUserGroupKey: abcdefghijlkmnopqrstuvwxyzabcd
   AlertThreshold: 3
+  
