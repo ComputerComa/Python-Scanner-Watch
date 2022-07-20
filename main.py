@@ -1,43 +1,120 @@
 from __future__ import print_function, unicode_literals
-from pip import main
 import serial # Import Serial Library
 from pushover import Pushover # Import Pushover Library
 import yaml
 from yaml.loader import SafeLoader
-from threading import Thread
+import threading
 from InquirerPy import prompt
 from pprint import pprint
+from os import system, name
+import logging
+logging.basicConfig(filename='debug.log', encoding='utf-8', level=logging.DEBUG)
 has_congfig = False
+write_debug = True
+def clear():
+   # for windows
+   if name == 'nt':
+      system('cls')
+   # for mac and linux
+   else:
+    system('clear')
+   return
+class StoppableThread(threading.Thread):
+    """Thread class with a stop() method. The thread itself has to check
+    regularly for the stopped() condition."""
+
+    def __init__(self,  *args, **kwargs):
+        super(StoppableThread, self).__init__(*args, **kwargs)
+        self._stop_event = threading.Event()
+
+    def stop(self):
+        self._stop_event.set()
+
+    def stopped(self):
+        return self._stop_event.is_set()
+
+def debug(message):
+    if write_debug:
+        logging.debug("DEBUG "+ message)
+        return
+    return
+
+
 try:
     with open('config.yaml') as config_file:
         cfgdata = yaml.load(config_file, Loader=SafeLoader)
+    debug('Config file found')
     ListeningCOMPort = cfgdata['LCP']
+    debug('LCP ok')
     ListeningCOMPORTBaud = cfgdata['LCPB']
+    debug('LLCPB ok')
     RelayEnabled = cfgdata['RelayEnabled']
-    RelayCOMPORT = cfgdata['RCP']
-    RelayCOMPORTBaud = cfgdata['RCPB']
+    debug('RelayEnabled ok')
     PushoverAPIKey = cfgdata['PushoverAPIKey']
+    debug('PushoverAPIKey ok')
     PushoverRegularUserGroupKey = cfgdata['PushoverRegularUserGroupKey']
+    debug('PushoverRegularUserGroupKey ok')
     PushoverAdminUserGroupKey = cfgdata['PushoverAdminUserGroupKey']
+    debug('PushoverAdminUserGroupKey ok')
     AlertThreshold = cfgdata['AlertThreshold']
+    debug('AlertThreshold ok')
+    if RelayEnabled:
+        debug('Relay is Enabled')
+        RelayCOMPORT = cfgdata['RCP']
+        debug('RCP ok')
+        RelayCOMPORTBaud = cfgdata['RCPB']
+        debug('RCPB ok')
+        RelayTest = cfgdata['RelayTest']
+        debug('RelayTest ok')
+        RelayCommands = cfgdata['RelayCommands']
+        debug('RelayCommands ok')
+        if RelayTest:
+            debug('Relay has Testing commands')
+            RelayCommandTest = cfgdata['RelayCommands']['Test']
+            debug('RelayCommandTest ok')
+        RelayCommandOpen = cfgdata['RelayCommands']['OpenRelay']
+        debug('RelayCommandOpen ok')
+        RelayCommandClose = cfgdata['RelayCommands']['CloseRelay']
+        debug('RelayCommandClose ok')  
     #Initializing pushover object
     pushover = Pushover(PushoverAPIKey)
+    debug('Pushover object initialized')
     has_congfig = True
+    debug("Config ok")
 except:
+    print('No config file found. Or the config has errors. Running setup wizard.')
     has_congfig = False
 
 
 
 
+
+
+#write a function to print config data to the console
+def print_config():
+    with open('config.yaml') as config_file:
+        cfgdata_I = yaml.load(config_file, Loader=SafeLoader) 
+    pprint(cfgdata_I)
+
+
+
+
 def readin():
-    ser = serial.Serial(ListeningCOMPort, ListeningCOMPORTBaud, timeout=1)
-    ser.write(b'SYN')
-    while True:
-        try:
-            readOut = ser.readline().decode('ascii')
-            #print(readOut)
-        except:
-            pass
+    try:
+        ser = serial.Serial(ListeningCOMPort, ListeningCOMPORTBaud, timeout=5)
+        ser.write(b'SYN')
+        while not threading.current_thread().stopped():
+            try:
+                readOut = ser.readline().decode('ascii')
+                if readOut != '':
+                    debug(readOut)
+            except:
+                debug('Error reading serial')
+                pass
+    except:
+        logging.error('Error opening serial')
+    ser.close()
+    exit
 
 def notify(mode,message):
     msg = pushover.msg(message)
@@ -50,22 +127,19 @@ def notify(mode,message):
         msg.set("title", "ADMIN Alert")
         msg.set("priority", "1")     
     else:
-        print('Invalid mode')
+        logging.error('Invalid mode')
     try:
         pushover.send(msg)
-        print('Notification sent')
+        logging.info('Notification sent')
     except:
-        print('Error sending notification')
+        logging.error('Error sending notification')
         pass
 
 
-th_main = Thread(target=readin)
+th_main = StoppableThread(target=readin)
 
-print("Welcome to TCST Alert System")
-if has_congfig:
-    print("Config file found")
-else:
-    print("Config file not found")
+def build_config():
+    logging.error("Config file not found")
     print("Please enter the following details")
     questions = [
         {
@@ -89,6 +163,33 @@ else:
             'name': 'RelayCOMPort',
             'message': 'Enter the COM port for relay:',
             'when': lambda answers: answers['RelayEnabled'] is True
+        },
+        {
+            'type': 'confirm',
+            'name': 'RelayTestConfirm',
+            'message': 'Does your relay have an option to send test commands? (If you don\'t know, leave this as false)',
+            'when': lambda answers: answers['RelayEnabled'] is True,
+            'default': False
+        },
+        {
+            'type': 'input',
+            'name': 'RelayTestCommand',
+            'message': 'Enter the test command: ',
+            'when': lambda answers: answers['RelayEnabled'] is True and answers['RelayTestConfirm'] is True
+        },
+        {
+            'type': 'input',
+            'name': 'RelayOpenCommand',
+            'message': 'Enter the command to open the relay: ',
+            'when': lambda answers: answers['RelayEnabled'] is True and answers['RelayTestConfirm'] is True,
+            'default': 'OPEN'
+        },
+        {
+            'type': 'input',
+            'name': 'RelayCloseCommand',
+            'message': 'Enter the command to close the relay: ',
+            'when': lambda answers: answers['RelayEnabled'] is True and answers['RelayTestConfirm'] is True,
+            'default': 'CLOSE'
         },
         {
             'type': 'input',
@@ -121,13 +222,27 @@ else:
     ListeningCOMPort = answers['ListeningCOMPort']
     ListeningCOMPORTBaud = answers['ListeningCOMPORTBaud']
     RelayEnabled = answers['RelayEnabled']
-    RelayCOMPort = answers['RelayCOMPort']
-    RelayCOMPORTBaud = answers['RelayCOMPORTBaud']
     PushoverAPIKey = answers['PushoverAPIKey']
     PushoverRegularUserGroupKey = answers['PushoverRegularUserGroupKey']
     PushoverAdminUserGroupKey = answers['PushoverAdminUserGroupKey']
     AlertThreshold = answers['AlertThreshold']
-
+    if RelayEnabled:
+        RelayTest = answers['RelayTestConfirm']
+        RelayCOMPort = answers['RelayCOMPort']
+        RelayCOMPORTBaud = answers['RelayCOMPORTBaud']
+        if RelayTest:
+            RelayCommandTest = answers['RelayTestCommand']
+        else:
+            RelayCommandTest = None
+        RelayCommandOpen = answers['RelayOpenCommand']
+        RelayCommandClose = answers['RelayCloseCommand']
+    else:
+        RelayCOMPort = None
+        RelayCOMPORTBaud = None
+        RelayCommandTest = None
+        RelayCommandOpen = None
+        RelayCommandClose = None
+        RelayTest = False
     #dump the config variables to a config.yaml file
     cfgdata = {
         'LCP': ListeningCOMPort,
@@ -138,12 +253,27 @@ else:
         'PushoverAPIKey': PushoverAPIKey,
         'PushoverRegularUserGroupKey': PushoverRegularUserGroupKey,
         'PushoverAdminUserGroupKey': PushoverAdminUserGroupKey,
-        'AlertThreshold': AlertThreshold
+        'AlertThreshold': AlertThreshold,
+        'RelayTest': RelayTest,
+        'RelayCommands': {
+            'Test': RelayCommandTest,
+            'OpenRelay': RelayCommandOpen,
+            'CloseRelay': RelayCommandClose
+        }
+
     }
     with open('config.yaml', 'w') as outfile:
         yaml.dump(cfgdata, outfile, default_flow_style=False)
-    exit()
+    return
+
+print("Welcome to TCST Alert System")
+if has_congfig:
+    print("Config file found")
+else:
+    build_config()
+
 def edit_config():
+    clear()
     config_options = [
         {
             'type': 'list',
@@ -191,30 +321,49 @@ def edit_config():
     return
 
 def main_list():
-    main_list_questions = [
-    {
+    if th_main.is_alive():
+        main_list_questions = [
+        {
+        'type': 'list',
+        'name': 'menu',
+        'message': 'The watch thread is running \n What would you like to do?',
+        'choices': ["Stop"]
+        }]
+    else:
+        main_list_questions = [
+        {
         'type': 'list',
         'name': 'menu',
         'message': 'What would you like to do?',
-        'choices': ["Start","Edit Config","Test Notifications","Exit"]
-    }
-]
+        'choices': ["Start","Rebuild Config","Edit Config","Print Config","Test Notifications","Exit"]
+        }
+    ]
     answers = prompt(main_list_questions)
     if answers['menu'] == 'Start':
-        print('Starting')
+        debug('Starting')
         th_main.start()
+    elif answers['menu'] == 'Stop':
+        debug('Stopping')
+        th_main.stop()
+        th_main.join()
+        return
     elif answers['menu'] == 'Test Notifications':
         print('Testing Notifications')
         notify('regular', 'Testing Notifications')
         notify('admin', 'Testing Notifications')
+        main_list()
+    elif answers['menu'] == 'Rebuild Config':
+        build_config()
+        quit()
     elif answers['menu'] == 'Edit Config':
         edit_config()
+    elif answers['menu'] == 'Print Config':
+        print_config()
+        print('\n')
     elif answers['menu'] == 'Exit':
-        exit()
+        quit()
     else:
         print('Invalid option')
-        main_list()
 
-main_list()
-
-##test_notify()
+while True:
+    main_list()

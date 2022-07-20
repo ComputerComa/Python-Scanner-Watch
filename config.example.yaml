@@ -5,5 +5,10 @@ PushoverAPIKey: abcdefghijlkmnopqrstuvwxyzabcd
 PushoverAdminUserGroupKey: abcdefghijlkmnopqrstuvwxyzabcd
 PushoverRegularUserGroupKey: abcdefghijlkmnopqrstuvwxyzabcd
 RCP: COM6
-RCPB: '14400'
+RCPB: '115200'
+RelayCommands:
+  CloseRelay: AT+CH1=1
+  OpenRelay: AT+CH1=0
+  Test: AT
 RelayEnabled: true
+RelayTest: true
