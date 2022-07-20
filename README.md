@@ -5,26 +5,26 @@
     2. Run main.py with no configuration file. and then follow the prompts to create a config.yaml file.
     ## Configuration File
     The configuration file is a YAML file. It has the following structure:
-    ```
-    Alert Threshold:
-       not yet implemented
-    LCP:
-       The COM port name of the incoming data from the scanner
-    LCPB:
-       The BAUD rate for the COM port of the incoming data from the scanner
-    PushoverAPIKey:
-         The API key for the Pushover API service.
-    PushoverAdminUserGroupKey:
-            The admin user group key for the Pushover API service. (Please note this is different from your standalone user key and must be setup withing pushover.)
-    PushoverRegularUserGroupKey:
-            The regular user group key for the Pushover API service. (Please note this is different from your standalone user key and must be setup withing pushover.)
-    RCP:
-        The COM port for outgoing commands to an optional relay controller for remote power cycling of the scanner.
-    RCPB:
-        The BAUD rate for the COM port of outgoing commands to an optional relay controller for remote power cycling of the scanner.
-    RelayEnabled:
-        Whether or not to use a relay controller for remote power cycling of the scanner.
-    ```
+        ```
+        Alert Threshold:
+        not yet implemented
+        LCP:
+        The COM port name of the incoming data from the scanner
+        LCPB:
+        The BAUD rate for the COM port of the incoming data from the scanner
+        PushoverAPIKey:
+            The API key for the Pushover API service.
+        PushoverAdminUserGroupKey:
+                The admin user group key for the Pushover API service. (Please note this is different from your standalone user key and must be setup withing pushover.)
+        PushoverRegularUserGroupKey:
+                The regular user group key for the Pushover API service. (Please note this is different from your standalone user key and must be setup withing pushover.)
+        RCP:
+            The COM port for outgoing commands to an optional relay controller for remote power cycling of the scanner.
+        RCPB:
+            The BAUD rate for the COM port of outgoing commands to an optional relay controller for remote power cycling of the scanner.
+        RelayEnabled:
+            Whether or not to use a relay controller for remote power cycling of the scanner.
+        ```
 
 ### TODO
 - Needed / Confirmed
