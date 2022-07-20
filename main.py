@@ -1,4 +1,5 @@
 from __future__ import print_function, unicode_literals
+from re import T
 import serial # Import Serial Library
 from pushover import Pushover # Import Pushover Library
 import yaml
@@ -8,9 +9,10 @@ from InquirerPy import prompt
 from pprint import pprint
 from os import system, name
 import logging
-logging.basicConfig(filename='debug.log', encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(filename='debug.log', encoding='utf-8', level=logging.DEBUG, filemode='w', format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 has_congfig = False
 write_debug = True
+read_error_count = 0
 def clear():
    # for windows
    if name == 'nt':
@@ -35,7 +37,7 @@ class StoppableThread(threading.Thread):
 
 def debug(message):
     if write_debug:
-        logging.debug("DEBUG "+ message)
+        logging.debug(str(message))
         return
     return
 
@@ -46,10 +48,13 @@ try:
     debug('Config file found')
     ListeningCOMPort = cfgdata['LCP']
     debug('LCP ok')
+    debug(ListeningCOMPort)
     ListeningCOMPORTBaud = cfgdata['LCPB']
     debug('LLCPB ok')
+    debug(ListeningCOMPORTBaud)
     RelayEnabled = cfgdata['RelayEnabled']
     debug('RelayEnabled ok')
+    debug(RelayEnabled)
     PushoverAPIKey = cfgdata['PushoverAPIKey']
     debug('PushoverAPIKey ok')
     PushoverRegularUserGroupKey = cfgdata['PushoverRegularUserGroupKey']
@@ -58,6 +63,7 @@ try:
     debug('PushoverAdminUserGroupKey ok')
     AlertThreshold = cfgdata['AlertThreshold']
     debug('AlertThreshold ok')
+    debug(AlertThreshold)
     if RelayEnabled:
         debug('Relay is Enabled')
         RelayCOMPORT = cfgdata['RCP']
@@ -66,16 +72,20 @@ try:
         debug('RCPB ok')
         RelayTest = cfgdata['RelayTest']
         debug('RelayTest ok')
+        debug(RelayTest)
         RelayCommands = cfgdata['RelayCommands']
         debug('RelayCommands ok')
         if RelayTest:
             debug('Relay has Testing commands')
             RelayCommandTest = cfgdata['RelayCommands']['Test']
             debug('RelayCommandTest ok')
+            debug(RelayCommandTest)
         RelayCommandOpen = cfgdata['RelayCommands']['OpenRelay']
         debug('RelayCommandOpen ok')
+        debug(RelayCommandOpen)
         RelayCommandClose = cfgdata['RelayCommands']['CloseRelay']
-        debug('RelayCommandClose ok')  
+        debug('RelayCommandClose ok')
+        debug(RelayCommandClose)
     #Initializing pushover object
     pushover = Pushover(PushoverAPIKey)
     debug('Pushover object initialized')
@@ -107,13 +117,53 @@ def readin():
             try:
                 readOut = ser.readline().decode('ascii')
                 if readOut != '':
-                    debug(readOut)
+                    debug("- SubThread Output - " + readOut)
             except:
                 debug('Error reading serial')
                 pass
     except:
         logging.error('Error opening serial')
     ser.close()
+    exit
+
+
+def relay(funcrion):
+    if funcrion == 'open':
+        ser = serial.Serial(RelayCOMPORT, RelayCOMPORTBaud, timeout=5)
+        ser.write(bytes(RelayCommandOpen, 'ascii'))
+        ser.close()
+    elif funcrion == 'close':
+        ser = serial.Serial(RelayCOMPORT, RelayCOMPORTBaud, timeout=5)
+        ser.write(bytes(RelayCommandClose, 'ascii'))
+        ser.close()
+    else:
+        exit
+def test_relay():
+    success = False
+    try:
+        ser = serial.Serial(RelayCOMPORT, RelayCOMPORTBaud, timeout=1)
+        ser.write(bytes(RelayCommandTest, 'ascii'))
+        errors = 0
+        while True:
+            try:
+                readOut = ser.readline().decode('ascii')
+                debug(readOut)
+                if errors > 10:
+                    logging.error('No response from relay')
+                    success = False
+                    break
+                elif readOut == 'OK':
+                    debug('Relay is working')
+                    success = True
+                    break
+            except:
+                errors += 1
+                debug('Error reading serial')
+                pass
+    except:
+        logging.error('Error opening serial')
+    ser.close()
+    return success
     exit
 
 def notify(mode,message):
@@ -256,9 +306,9 @@ def build_config():
         'AlertThreshold': AlertThreshold,
         'RelayTest': RelayTest,
         'RelayCommands': {
-            'Test': RelayCommandTest,
-            'OpenRelay': RelayCommandOpen,
-            'CloseRelay': RelayCommandClose
+            'Test': str(RelayCommandTest),
+            'OpenRelay': str(RelayCommandOpen),
+            'CloseRelay': str(RelayCommandClose)
         }
 
     }
@@ -321,6 +371,7 @@ def edit_config():
     return
 
 def main_list():
+    clear()
     if th_main.is_alive():
         main_list_questions = [
         {
@@ -335,7 +386,7 @@ def main_list():
         'type': 'list',
         'name': 'menu',
         'message': 'What would you like to do?',
-        'choices': ["Start","Rebuild Config","Edit Config","Print Config","Test Notifications","Exit"]
+        'choices': ["Start","Rebuild Config","Edit Config","Print Config","Test Notifications","Test Relay","Exit"]
         }
     ]
     answers = prompt(main_list_questions)
@@ -360,6 +411,13 @@ def main_list():
     elif answers['menu'] == 'Print Config':
         print_config()
         print('\n')
+        input("Press enter to continue")
+    elif answers['menu'] == 'Test Relay':
+        if RelayEnabled:
+            out = test_relay()
+            debug(out)
+        else:
+            print('Relay is not enabled')
     elif answers['menu'] == 'Exit':
         quit()
     else:
