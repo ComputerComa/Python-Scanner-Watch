@@ -1,11 +1,9 @@
----
-  LCP: COM4 #Used to monitor the incoming scanner DATA
-  LCPB: 14400
-  RelayEnabled: True #if there is a reset relay
-  RCP: COM6 #The outgoing COM port for the Reset relay
-  RCPB: 14400
-  PushoverAPIKey: abcdefghijlkmnopqrstuvwxyzabcd #The app key created for notifications
-  #Needs two separate user groups setup, the admin group for administrative notifications, and a user group for regular notifications. (The user group can be setup to be publically subnscribable)
-  PushoverRegularUserGroupKey: abcdefghijlkmnopqrstuvwxyzabcd 
-  PushoverAdminUserGroupKey: abcdefghijlkmnopqrstuvwxyzabcd
-  AlertThreshold: 3
+AlertThreshold: '3'
+LCP: COM4
+LCPB: '14400'
+PushoverAPIKey: abcdefghijlkmnopqrstuvwxyzabcd
+PushoverAdminUserGroupKey: abcdefghijlkmnopqrstuvwxyzabcd
+PushoverRegularUserGroupKey: abcdefghijlkmnopqrstuvwxyzabcd
+RCP: COM6
+RCPB: '14400'
+RelayEnabled: true
