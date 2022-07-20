@@ -28,11 +28,11 @@
 
 ### TODO
 - Needed / Confirmed
-[ ] YAML section for Relay commands
-[ ] implement alerts for offline notifications and errors
-[ ] implememnt configurable alerts for scanner.
+ - [ ] YAML section for Relay commands
+ - [ ] implement alerts for offline notifications and errors
+ - [ ] implememnt configurable alerts for scanner.
 - Wants / Possible
-[ ] possibility of tone recognition etc.
+ - [ ] possibility of tone recognition etc.
 
 ## Misc and housekeeping
 
