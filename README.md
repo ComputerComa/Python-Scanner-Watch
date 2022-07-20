@@ -33,4 +33,7 @@
 [ ] implememnt configurable alerts for scanner.
 - Wants / Possible
 [ ] possibility of tone recognition etc.
-pushover library used => https://github.com/Wyattjoh/pushover
+
+## Misc and housekeeping
+
+Pushover library used => https://github.com/Wyattjoh/pushover
