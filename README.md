@@ -1,10 +1,10 @@
 # Python Scanner Watch
 ## Getting Started
-    You have two options to get started:
-    1. Clone the config.example.yaml file to config.yaml and edit it to suite you needs.
-    2. Run main.py with no configuration file. and then follow the prompts to create a config.yaml file.
-## Configuration File
-### The configuration file is a YAML file. It has the following structure:
+### You have two options to get started:
+- Clone the config.example.yaml file to config.yaml and edit it to suite you needs.
+- Run main.py with no configuration file. and then follow the prompts to create a config.yaml file.
+## Unsing the Configuration File
+### The configuration file is a YAML file. It has the following structure
         ```
         Alert Threshold:
         not yet implemented
