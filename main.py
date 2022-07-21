@@ -175,7 +175,7 @@ def notify(mode,message):
     elif mode == 'admin':
         pushover.user(PushoverAdminUserGroupKey)
         msg.set("title", "ADMIN Alert")
-        msg.set("priority", "1")     
+        msg.set("priority", "0")     
     else:
         logging.error('Invalid mode')
     try:
